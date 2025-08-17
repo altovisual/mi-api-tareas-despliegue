@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tareas Pro</title>
+    <!-- 1. Añadimos el CSS del framework Bulma desde un CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <!-- 2. Añadimos Font Awesome para los iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <style>
+        /* Un pequeño estilo personalizado para las tareas completadas */
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Usamos las clases de Bulma para estructurar y dar estilo -->
+    <section class="section">
+        <div class="container">
+            <h1 class="title has-text-centered">
+                Mi Gestor de Tareas
+            </h1>
+            <p class="subtitle has-text-centered">
+                Una aplicación completa con FastAPI y Bulma
+            </p>
+
+            <!-- Columnas para el formulario y la lista de tareas -->
+            <div class="columns is-centered">
+                <div class="column is-8">
+                    <!-- Formulario para añadir nuevas tareas -->
+                    <div class="box">
+                        <form id="task-form">
+                            <div class="field">
+                                <label class="label">Título</label>
+                                <div class="control">
+                                    <input class="input" type="text" id="titulo" placeholder="Ej: Aprender sobre WebSockets" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Descripción</label>
+                                <div class="control">
+                                    <textarea class="textarea" id="descripcion" placeholder="Ej: Investigar cómo implementarlos con FastAPI" required></textarea>
+                                </div>
+                            </div>
+                            <div class="control">
+                                <button type="submit" class="button is-primary is-fullwidth">
+                                    <span class="icon is-small">
+                                        <i class="fas fa-plus"></i>
+                                    </span>
+                                    <span>Añadir Tarea</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Aquí se mostrará la lista de tareas -->
+                    <h2 class="title is-4 mt-5">Mis Tareas</h2>
+                    <div id="task-list">
+                        <!-- Las tareas se cargarán dinámicamente aquí con JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enlazamos nuestro script de JavaScript al final -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
