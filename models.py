@@ -1,6 +1,6 @@
 # models.py
 from sqlalchemy import Boolean, Column, Integer, String
-from .base import Base  # <-- ¡CAMBIO IMPORTANTE!
+from base import Base  # <-- ¡CAMBIO IMPORTANTE!
 
 class Tarea(Base):
     __tablename__ = "tareas"

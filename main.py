@@ -6,9 +6,9 @@ from typing import List
 from sqlalchemy.orm import Session
 
 # Importamos los módulos que hemos creado (ahora funciona gracias a la estructura de paquete)
-from . import models, schemas
-from .database import SessionLocal, engine
-from .base import Base
+import models, schemas
+from database import SessionLocal, engine
+from base import Base
 
 # Crea la tabla en la base de datos (si no existe)
 Base.metadata.create_all(bind=engine)
@@ -76,8 +76,8 @@ def eliminar_tarea(tarea_id: int, db: Session = Depends(get_db)):
 # SECCIÓN 2: SERVIR LA INTERFAZ DE USUARIO (El Frontend)
 # =============================================================================
 
-app.mount("/static", StaticFiles(directory="mi_api_tareas/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", response_class=FileResponse, tags=["Interfaz de Usuario"])
 async def read_root():
-    return "mi_api_tareas/static/index.html"
+    return "static/index.html"
