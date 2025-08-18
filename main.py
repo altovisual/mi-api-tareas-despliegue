@@ -1,83 +1,88 @@
 # main.py
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from typing import List
 from sqlalchemy.orm import Session
+from typing import List
 
-# Importamos los módulos que hemos creado (ahora funciona gracias a la estructura de paquete)
-import models, schemas
-from database import SessionLocal, engine
-from base import Base
+# Importamos los módulos de nuestra aplicación
+import crud
+import models
+import schemas
+from database import engine, get_db
 
-# Crea la tabla en la base de datos (si no existe)
-Base.metadata.create_all(bind=engine)
+# Esta línea le dice a SQLAlchemy que cree las tablas definidas en models.py
+# en la base de datos si aún no existen.
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="API de Lista de Tareas - Versión Final",
-    description="Proyecto completo que conecta una API a una base de datos SQLite y sirve una interfaz de usuario web.",
-    version="3.0.0",
+    title="API Modular Siempre Encendida",
+    description="Una API robusta con arquitectura modular, base de datos persistente y que se mantiene activa 24/7.",
+    version="5.0.0"
 )
 
-# Dependencia para la Sesión de la Base de Datos
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 # =============================================================================
-# SECCIÓN 1: ENDPOINTS DE LA API (El Backend)
+# SECCIÓN 1: ENDPOINT DE SUPERVISIÓN (HEALTH CHECK)
 # =============================================================================
 
-@app.post("/tareas", response_model=schemas.Tarea, status_code=status.HTTP_201_CREATED, tags=["API"])
-def crear_tarea(tarea: schemas.TareaCreacion, db: Session = Depends(get_db)):
-    db_tarea = models.Tarea(titulo=tarea.titulo, descripcion=tarea.descripcion, completada=tarea.completada)
-    db.add(db_tarea)
-    db.commit()
-    db.refresh(db_tarea)
-    return db_tarea
+@app.get("/health", status_code=status.HTTP_200_OK, tags=["Supervisión"])
+def health_check():
+    """
+    Endpoint simple que los servicios externos (como UptimeRobot) pueden
+    visitar para mantener la API activa.
+    """
+    return {"status": "ok"}
 
-@app.get("/tareas", response_model=List[schemas.Tarea], tags=["API"])
-def obtener_tareas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    tareas = db.query(models.Tarea).offset(skip).limit(limit).all()
+
+# =============================================================================
+# SECCIÓN 2: ENDPOINTS DE LA API PARA TAREAS
+# =============================================================================
+
+@app.post("/tareas", response_model=schemas.Tarea, status_code=status.HTTP_201_CREATED, tags=["Tareas"])
+def crear_una_tarea(tarea: schemas.TareaCreacion, db: Session = Depends(get_db)):
+    """Crea una nueva tarea y la guarda en la base de datos."""
+    return crud.create_tarea(db=db, tarea=tarea)
+
+@app.get("/tareas", response_model=List[schemas.Tarea], tags=["Tareas"])
+def leer_tareas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """Obtiene una lista de todas las tareas."""
+    tareas = crud.get_tareas(db, skip=skip, limit=limit)
     return tareas
 
-@app.get("/tareas/{tarea_id}", response_model=schemas.Tarea, tags=["API"])
-def obtener_tarea(tarea_id: int, db: Session = Depends(get_db)):
-    tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
-    if tarea is None:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
-    return tarea
-
-@app.put("/tareas/{tarea_id}", response_model=schemas.Tarea, tags=["API"])
-def actualizar_tarea(tarea_id: int, tarea_actualizada: schemas.TareaCreacion, db: Session = Depends(get_db)):
-    db_tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
+@app.get("/tareas/{tarea_id}", response_model=schemas.Tarea, tags=["Tareas"])
+def leer_una_tarea(tarea_id: int, db: Session = Depends(get_db)):
+    """Obtiene una única tarea por su ID."""
+    db_tarea = crud.get_tarea(db, tarea_id=tarea_id)
     if db_tarea is None:
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
-    db_tarea.titulo = tarea_actualizada.titulo
-    db_tarea.descripcion = tarea_actualizada.descripcion
-    db_tarea.completada = tarea_actualizada.completada
-    db.commit()
-    db.refresh(db_tarea)
     return db_tarea
 
-@app.delete("/tareas/{tarea_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["API"])
-def eliminar_tarea(tarea_id: int, db: Session = Depends(get_db)):
-    db_tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
+@app.put("/tareas/{tarea_id}", response_model=schemas.Tarea, tags=["Tareas"])
+def actualizar_una_tarea(tarea_id: int, tarea: schemas.TareaCreacion, db: Session = Depends(get_db)):
+    """Actualiza una tarea existente por su ID."""
+    db_tarea = crud.update_tarea(db, tarea_id=tarea_id, tarea_data=tarea)
     if db_tarea is None:
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
-    db.delete(db_tarea)
-    db.commit()
-    return
+    return db_tarea
+
+@app.delete("/tareas/{tarea_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Tareas"])
+def eliminar_una_tarea(tarea_id: int, db: Session = Depends(get_db)):
+    """Elimina una tarea por su ID."""
+    db_tarea = crud.get_tarea(db, tarea_id=tarea_id)
+    if db_tarea is None:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    crud.delete_tarea(db, tarea_id=tarea_id)
+    return # No se devuelve contenido en un DELETE exitoso
+
 
 # =============================================================================
-# SECCIÓN 2: SERVIR LA INTERFAZ DE USUARIO (El Frontend)
+# SECCIÓN 3: SERVIR LA INTERFAZ DE USUARIO (FRONTEND)
 # =============================================================================
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/", response_class=FileResponse, tags=["Interfaz de Usuario"])
-async def read_root():
+@app.get("/", response_class=FileResponse, include_in_schema=False)
+async def root():
+    """Sirve el archivo principal de la interfaz de usuario."""
     return "static/index.html"
