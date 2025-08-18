@@ -1,4 +1,4 @@
-// static/script.js (VERSIÓN FINALÍSIMA)
+// static/script.js (VERSIÓN FINALÍSIMA Y COMPLETA)
 document.addEventListener("DOMContentLoaded", () => {
     const authContainer = document.getElementById("auth-container"), appContainer = document.getElementById("app-container");
     const loginForm = document.getElementById("login-form"), registerForm = document.getElementById("register-form");
@@ -93,4 +93,70 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <div class="buttons is-right">
                 <button class="button is-small is-light button-complete" data-id="${tarea.id}">${tarea.completada ? 'Deshacer' : 'Completar'}</button>
-                <button class="b
+                <button class="button is-small is-light button-edit" data-id="${tarea.id}">Editar</button>
+                <button class="button is-small is-light button-assign" data-id="${tarea.id}">Asignar</button>
+                <button class="button is-small is-danger is-light button-delete" data-id="${tarea.id}">Eliminar</button>
+            </div>`;
+            taskListDiv.appendChild(taskCard);
+        });
+    }
+
+    addTaskFab.addEventListener('click', () => {
+        taskModalTitle.textContent = "Nueva Tarea";
+        taskForm.reset();
+        taskIdInput.value = '';
+        openModal(taskModal);
+    });
+
+    saveTaskButton.addEventListener('click', async () => {
+        const id = taskIdInput.value, titulo = document.getElementById('titulo').value, descripcion = document.getElementById('descripcion').value;
+        const body = { titulo, descripcion, completada: false };
+        let response;
+        if (id) {
+            const res = await apiFetch(`/tareas/${id}`); if(!res || !res.ok) return; const t = await res.json();
+            body.completada = t.completada;
+            response = await apiFetch(`/tareas/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+            response = await apiFetch('/tareas', { method: 'POST', body: JSON.stringify(body) });
+        }
+        if(response && response.ok) { closeModal(taskModal); cargarTareas(); showToast(`Tarea ${id ? 'actualizada' : 'creada'}.`); } 
+        else { showToast("Error al guardar la tarea.", "is-danger"); }
+    });
+
+    taskListDiv.addEventListener('click', async (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
+        const id = button.dataset.id;
+        if (button.classList.contains('button-delete')) {
+            if (confirm("¿Estás seguro?")) { await apiFetch(`/tareas/${id}`, { method: 'DELETE' }); cargarTareas(); showToast("Tarea eliminada."); }
+        } else if (button.classList.contains('button-complete')) {
+            const res = await apiFetch(`/tareas/${id}`); if (!res || !res.ok) return; const t = await res.json();
+            await apiFetch(`/tareas/${id}`, { method: 'PUT', body: JSON.stringify({ ...t, completada: !t.completada }) });
+            cargarTareas();
+        } else if (button.classList.contains('button-edit')) {
+            const res = await apiFetch(`/tareas/${id}`); if (!res || !res.ok) return; const t = await res.json();
+            taskModalTitle.textContent = "Editar Tarea";
+            taskIdInput.value = t.id;
+            document.getElementById('titulo').value = t.titulo;
+            document.getElementById('descripcion').value = t.descripcion;
+            openModal(taskModal);
+        } else if (button.classList.contains('button-assign')) {
+            assignForm.dataset.taskId = id; openModal(assignModal);
+        }
+    });
+
+    assignForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const taskId = e.target.dataset.taskId;
+        const email = document.getElementById('assign-email').value;
+        const response = await apiFetch(`/tareas/${taskId}/assign`, { method: 'POST', body: JSON.stringify({ email }) });
+        if(response && response.ok) {
+            showToast("Usuario asignado.");
+            document.getElementById('assign-email').value = "";
+            closeModal(assignModal);
+            cargarTareas();
+        } else { showToast("Error al asignar usuario.", "is-danger"); }
+    });
+
+    updateUI();
+});
