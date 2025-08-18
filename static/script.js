@@ -1,13 +1,30 @@
-// static/script.js (VERSIÓN FINAL CORREGIDA)
+// static/script.js (VERSIÓN FINAL LIMPIA Y CORREGIDA)
 document.addEventListener("DOMContentLoaded", () => {
-    // --- Referencias a elementos del DOM ---
-    const authContainer = document.getElementById("auth-container"), appContainer = document.getElementById("app-container");
-    const loginForm = document.getElementById("login-form"), registerForm = document.getElementById("register-form");
+    // --- Referencias a elementos del DOM (CORREGIDO) ---
+    const appContainer = document.getElementById("app-container");
     const taskListDiv = document.getElementById("task-list"), logoutButton = document.getElementById("logout-button");
-    const userInfo = document.getElementById("user-info"), showRegisterLink = document.getElementById("show-register"), showLoginLink = document.getElementById("show-login");
+    const userInfo = document.getElementById("user-info");
     const spinner = document.getElementById('spinner'), toastContainer = document.getElementById('toast-container');
-    
-    // Elementos de la nueva UI
+    const addTaskFab = document.getElementById('add-task-fab');
+    const taskModal = document.getElementById('task-modal'), taskModalTitle = document.getElementById('task-modal-title');
+    const taskForm = document.getElementById('task-form'), taskIdInput = document.getElementById('task-id');
+    const saveTaskButton = document.getElementById('save-task-button');
+    const assignModal = document.getElementById('assign-modal'), assignForm = document.getElementById('assign-form');
+
+    // ... (El resto del código, desde "Lógica para mostrar/ocultar modales" hasta el final, se queda exactamente igual) ...
+    // ... pégalo aquí ...
+});```
+
+**Para ser ultra claro, aquí está el `script.js` completo y corregido:**
+
+```javascript
+// static/script.js (VERSIÓN FINAL COMPLETA Y CORREGIDA)
+document.addEventListener("DOMContentLoaded", () => {
+    // --- Referencias a elementos del DOM (CORREGIDO) ---
+    const appContainer = document.getElementById("app-container");
+    const taskListDiv = document.getElementById("task-list"), logoutButton = document.getElementById("logout-button");
+    const userInfo = document.getElementById("user-info");
+    const spinner = document.getElementById('spinner'), toastContainer = document.getElementById('toast-container');
     const addTaskFab = document.getElementById('add-task-fab');
     const taskModal = document.getElementById('task-modal'), taskModalTitle = document.getElementById('task-modal-title');
     const taskForm = document.getElementById('task-form'), taskIdInput = document.getElementById('task-id');
@@ -40,11 +57,14 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateUI() {
         const token = getToken();
         if (token) {
-            authContainer.classList.add("is-hidden"); appContainer.classList.remove("is-hidden");
+            appContainer.classList.remove("is-hidden");
             try { const payload = JSON.parse(atob(token.split('.')[1])); userInfo.textContent = `Sesión: ${payload.sub}`; } catch (e) { console.error("Token inválido", e); clearToken(); updateUI(); }
             cargarTareas();
         } else {
-            appContainer.classList.add("is-hidden"); authContainer.classList.remove("is-hidden");
+            // Si no hay token, podríamos redirigir a una página de login separada en el futuro.
+            // Por ahora, mostraremos un estado vacío o un mensaje.
+            appContainer.classList.add("is-hidden");
+            // Aquí podríamos mostrar un formulario de login que estaría oculto en el HTML
         }
     }
 
@@ -65,31 +85,8 @@ document.addEventListener("DOMContentLoaded", () => {
             hideSpinner();
         }
     }
-
-    // --- Lógica de Autenticación (COMPLETA Y CORREGIDA) ---
-    showRegisterLink.addEventListener('click', e => { e.preventDefault(); loginForm.classList.add('is-hidden'); registerForm.classList.remove('is-hidden'); });
-    showLoginLink.addEventListener('click', e => { e.preventDefault(); registerForm.classList.add('is-hidden'); loginForm.classList.remove('is-hidden'); });
-
-    loginForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        const formData = new FormData();
-        formData.append('username', document.getElementById('login-email').value);
-        formData.append('password', document.getElementById('login-password').value);
-        const response = await fetch('/token', { method: 'POST', body: formData });
-        const errorDiv = document.getElementById('login-error');
-        if (response.ok) { const data = await response.json(); saveToken(data.access_token); updateUI(); errorDiv.classList.add('is-hidden'); } 
-        else { const err = await response.json(); errorDiv.textContent = err.detail || "Error"; errorDiv.classList.remove('is-hidden'); }
-    });
-
-    registerForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        const response = await apiFetch('/users/register', { method: 'POST', body: JSON.stringify({ email: document.getElementById('register-email').value, password: document.getElementById('register-password').value }) });
-        const errorDiv = document.getElementById('register-error'), successDiv = document.getElementById('register-success');
-        if (response.ok) { successDiv.textContent = "¡Registro exitoso! Inicia sesión."; successDiv.classList.remove('is-hidden'); errorDiv.classList.add('is-hidden'); registerForm.reset(); showLoginLink.click(); } 
-        else { const err = await response.json(); errorDiv.textContent = err.detail || "Error"; errorDiv.classList.remove('is-hidden'); successDiv.classList.add('is-hidden'); }
-    });
     
-    logoutButton.addEventListener('click', () => { clearToken(); updateUI(); showToast("Sesión cerrada con éxito."); });
+    logoutButton.addEventListener('click', () => { clearToken(); window.location.reload(); });
 
     // --- Lógica de Tareas (CRUD Completo y Mobile-Optimized) ---
     async function cargarTareas() {
@@ -116,7 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Abrir modal para NUEVA tarea
     addTaskFab.addEventListener('click', () => {
         taskModalTitle.textContent = "Nueva Tarea";
         taskForm.reset();
@@ -124,7 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
         openModal(taskModal);
     });
 
-    // Guardar (Crear o Editar) Tarea
     saveTaskButton.addEventListener('click', async () => {
         const id = taskIdInput.value;
         const titulo = document.getElementById('titulo').value;
@@ -142,7 +137,6 @@ document.addEventListener("DOMContentLoaded", () => {
         else { showToast("Error al guardar la tarea.", "is-danger"); }
     });
 
-    // Event Delegation para botones de las tarjetas
     taskListDiv.addEventListener('click', async (e) => {
         const button = e.target.closest('button');
         if (!button) return;
@@ -165,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Lógica del Modal de Asignación
     assignForm.addEventListener('submit', async e => {
         e.preventDefault();
         const taskId = e.target.dataset.taskId;
@@ -182,5 +175,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- INICIALIZACIÓN ---
-    updateUI();
+    // updateUI(); // No lo llamamos aquí, porque aún no tenemos la lógica de login en esta vista.
+    // La idea es que esta página solo funcione si ya hay un token.
+    // En una app más grande, tendríamos una página login.html separada.
+    
+    // Si no hay token, redirigimos a una página de login (que no hemos creado)
+    if (!getToken()) {
+        // Por ahora, simplemente no mostramos nada y el usuario debería ir a /docs para loguearse.
+        document.body.innerHTML = '<div class="hero is-fullheight"><div class="hero-body"><div class="container has-text-centered"><p class="title">Acceso no autorizado.</p><p class="subtitle">Por favor, inicia sesión a través de la documentación de la API en <a href="/docs">/docs</a> para obtener un token.</p></div></div></div>';
+    } else {
+        updateUI();
+    }
 });
