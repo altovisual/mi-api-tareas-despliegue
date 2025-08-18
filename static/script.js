@@ -1,4 +1,4 @@
-// static/script.js
+// static/script.js (VERSIÓN FINAL CORREGIDA)
 document.addEventListener("DOMContentLoaded", () => {
     // --- Referencias a elementos del DOM ---
     const authContainer = document.getElementById("auth-container"), appContainer = document.getElementById("app-container");
@@ -26,14 +26,14 @@ document.addEventListener("DOMContentLoaded", () => {
     
     function showToast(message, type = 'is-success') {
         const toast = document.createElement('div');
-        toast.className = `notification ${type}`;
+        toast.className = `notification ${type} is-light`;
         toast.innerHTML = `${message}<button class="delete"></button>`;
         toastContainer.appendChild(toast);
         toast.querySelector('.delete').addEventListener('click', () => toast.remove());
         setTimeout(() => toast.remove(), 4000);
     }
 
-    // --- Gestión del Token (sin cambios) ---
+    // --- Gestión del Token ---
     const saveToken = token => localStorage.setItem('authToken', token), getToken = () => localStorage.getItem('authToken'), clearToken = () => localStorage.removeItem('authToken');
     
     // --- Lógica de UI Principal ---
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Función Genérica de Fetch API (con Spinner) ---
+    // --- Función Genérica de Fetch API ---
     async function apiFetch(endpoint, options = {}) {
         showSpinner();
         const headers = { 'Content-Type': 'application/json', ...options.headers };
@@ -66,33 +66,52 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Lógica de Autenticación (sin cambios en la lógica, solo feedback) ---
-    loginForm.addEventListener('submit', async e => { /* ... */ });
-    registerForm.addEventListener('submit', async e => { /* ... */ });
+    // --- Lógica de Autenticación (COMPLETA Y CORREGIDA) ---
+    showRegisterLink.addEventListener('click', e => { e.preventDefault(); loginForm.classList.add('is-hidden'); registerForm.classList.remove('is-hidden'); });
+    showLoginLink.addEventListener('click', e => { e.preventDefault(); registerForm.classList.add('is-hidden'); loginForm.classList.remove('is-hidden'); });
+
+    loginForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('username', document.getElementById('login-email').value);
+        formData.append('password', document.getElementById('login-password').value);
+        const response = await fetch('/token', { method: 'POST', body: formData });
+        const errorDiv = document.getElementById('login-error');
+        if (response.ok) { const data = await response.json(); saveToken(data.access_token); updateUI(); errorDiv.classList.add('is-hidden'); } 
+        else { const err = await response.json(); errorDiv.textContent = err.detail || "Error"; errorDiv.classList.remove('is-hidden'); }
+    });
+
+    registerForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const response = await apiFetch('/users/register', { method: 'POST', body: JSON.stringify({ email: document.getElementById('register-email').value, password: document.getElementById('register-password').value }) });
+        const errorDiv = document.getElementById('register-error'), successDiv = document.getElementById('register-success');
+        if (response.ok) { successDiv.textContent = "¡Registro exitoso! Inicia sesión."; successDiv.classList.remove('is-hidden'); errorDiv.classList.add('is-hidden'); registerForm.reset(); showLoginLink.click(); } 
+        else { const err = await response.json(); errorDiv.textContent = err.detail || "Error"; errorDiv.classList.remove('is-hidden'); successDiv.classList.add('is-hidden'); }
+    });
+    
     logoutButton.addEventListener('click', () => { clearToken(); updateUI(); showToast("Sesión cerrada con éxito."); });
 
     // --- Lógica de Tareas (CRUD Completo y Mobile-Optimized) ---
     async function cargarTareas() {
         const response = await apiFetch('/tareas');
-        if (!response || !response.ok) return;
+        if (!response || !response.ok) { taskListDiv.innerHTML = '<p>No se pudieron cargar las tareas.</p>'; return; }
         const tareas = await response.json();
         taskListDiv.innerHTML = "";
         tareas.forEach(tarea => {
             const assigneesHtml = tarea.assignees.map(u => `<span class="tag is-info mr-1">${u.email}</span>`).join('');
             const taskCard = document.createElement("div");
-            taskCard.className = `box ${tarea.completada ? 'completed' : ''}`; // Usamos 'box' para un mejor estilo móvil
-            taskCard.innerHTML = `
-                <div class="content">
-                    <p class="is-size-5 has-text-weight-semibold">${tarea.titulo}</p>
-                    <p>${tarea.descripcion}</p>
-                    <div class="tags"><span class="tag is-light mr-2">Asignados:</span>${assigneesHtml}</div>
-                </div>
-                <div class="buttons is-right">
-                    <button class="button is-small is-light button-complete" data-id="${tarea.id}">${tarea.completada ? 'Deshacer' : 'Completar'}</button>
-                    <button class="button is-small is-light button-edit" data-id="${tarea.id}">Editar</button>
-                    <button class="button is-small is-light button-assign" data-id="${tarea.id}">Asignar</button>
-                    <button class="button is-small is-danger is-light button-delete" data-id="${tarea.id}">Eliminar</button>
-                </div>`;
+            taskCard.className = `box ${tarea.completada ? 'completed' : ''}`;
+            taskCard.innerHTML = `<div class="content">
+                <p class="is-size-5 has-text-weight-semibold">${tarea.titulo}</p>
+                <p>${tarea.descripcion}</p>
+                <div class="tags"><span class="tag is-light mr-2">Asignados:</span>${assigneesHtml}</div>
+            </div>
+            <div class="buttons is-right">
+                <button class="button is-small is-light button-complete" data-id="${tarea.id}">${tarea.completada ? 'Deshacer' : 'Completar'}</button>
+                <button class="button is-small is-light button-edit" data-id="${tarea.id}">Editar</button>
+                <button class="button is-small is-light button-assign" data-id="${tarea.id}">Asignar</button>
+                <button class="button is-small is-danger is-light button-delete" data-id="${tarea.id}">Eliminar</button>
+            </div>`;
             taskListDiv.appendChild(taskCard);
         });
     }
@@ -101,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addTaskFab.addEventListener('click', () => {
         taskModalTitle.textContent = "Nueva Tarea";
         taskForm.reset();
-        taskIdInput.value = ''; // Limpiar el ID
+        taskIdInput.value = '';
         openModal(taskModal);
     });
 
@@ -110,24 +129,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const id = taskIdInput.value;
         const titulo = document.getElementById('titulo').value;
         const descripcion = document.getElementById('descripcion').value;
-        const body = { titulo, descripcion, completada: false }; // 'completada' se maneja por su propio botón
-        
+        const body = { titulo, descripcion, completada: false };
         let response;
-        if (id) { // Estamos editando
+        if (id) {
             const res = await apiFetch(`/tareas/${id}`); if(!res || !res.ok) return; const t = await res.json();
-            body.completada = t.completada; // Conservar el estado 'completada'
+            body.completada = t.completada;
             response = await apiFetch(`/tareas/${id}`, { method: 'PUT', body: JSON.stringify(body) });
-        } else { // Estamos creando
+        } else {
             response = await apiFetch('/tareas', { method: 'POST', body: JSON.stringify(body) });
         }
-
-        if(response && response.ok) {
-            closeModal(taskModal);
-            cargarTareas();
-            showToast(`Tarea ${id ? 'actualizada' : 'creada'} con éxito.`);
-        } else {
-            showToast("Error al guardar la tarea.", "is-danger");
-        }
+        if(response && response.ok) { closeModal(taskModal); cargarTareas(); showToast(`Tarea ${id ? 'actualizada' : 'creada'}.`); } 
+        else { showToast("Error al guardar la tarea.", "is-danger"); }
     });
 
     // Event Delegation para botones de las tarjetas
@@ -135,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const button = e.target.closest('button');
         if (!button) return;
         const id = button.dataset.id;
-
         if (button.classList.contains('button-delete')) {
             if (confirm("¿Estás seguro?")) { await apiFetch(`/tareas/${id}`, { method: 'DELETE' }); cargarTareas(); showToast("Tarea eliminada."); }
         } else if (button.classList.contains('button-complete')) {
@@ -154,8 +165,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Lógica del Modal de Asignación (sin cambios)
-    assignForm.addEventListener('submit', async e => { /* ... */ });
+    // Lógica del Modal de Asignación
+    assignForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const taskId = e.target.dataset.taskId;
+        const email = document.getElementById('assign-email').value;
+        const response = await apiFetch(`/tareas/${taskId}/assign`, { method: 'POST', body: JSON.stringify({ email }) });
+        if(response && response.ok) {
+            showToast("Usuario asignado.");
+            document.getElementById('assign-email').value = "";
+            closeModal(assignModal);
+            cargarTareas();
+        } else {
+            showToast("Error al asignar usuario.", "is-danger");
+        }
+    });
 
     // --- INICIALIZACIÓN ---
     updateUI();
