@@ -1,6 +1,18 @@
 # schemas.py
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List
+
+# --- Schemas para Usuarios ---
+class UserBase(BaseModel):
+    email: EmailStr
+
+class UserCreate(UserBase):
+    password: str
+
+class User(UserBase):
+    id: int
+    class Config:
+        orm_mode = True
 
 # --- Schemas para Tareas ---
 class TareaBase(BaseModel):
@@ -13,19 +25,8 @@ class TareaCreacion(TareaBase):
 
 class Tarea(TareaBase):
     id: int
-    owner_id: int
-    class Config:
-        orm_mode = True
-
-# --- Schemas para Usuarios ---
-class UserBase(BaseModel):
-    email: str
-
-class UserCreate(UserBase):
-    password: str
-
-class User(UserBase):
-    id: int
+    creator_id: int
+    assignees: List[User] = []
     class Config:
         orm_mode = True
 
@@ -35,4 +36,8 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+# --- Schema para Asignaciones ---
+class AssignRequest(BaseModel):
+    email: EmailStr

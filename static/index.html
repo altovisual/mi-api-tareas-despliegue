@@ -9,106 +9,66 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <style>
         .completed { text-decoration: line-through; opacity: 0.6; }
-        /* Oculta un elemento por defecto */
         .is-hidden { display: none; }
     </style>
 </head>
 <body>
     <section class="section">
         <div class="container">
-
-            <!-- ======================================= -->
-            <!-- VISTA 1: CONTENEDOR DE AUTENTICACIÓN    -->
-            <!-- ======================================= -->
+            <!-- VISTA 1: AUTENTICACIÓN -->
             <div id="auth-container">
                 <div class="columns is-centered">
                     <div class="column is-5">
-                        <!-- Formulario de Inicio de Sesión (visible por defecto) -->
                         <form id="login-form" class="box">
                             <h2 class="title has-text-centered">Iniciar Sesión</h2>
                             <div id="login-error" class="notification is-danger is-light is-hidden"></div>
-                            <div class="field">
-                                <label class="label">Email</label>
-                                <div class="control">
-                                    <input class="input" type="email" id="login-email" required>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <label class="label">Contraseña</label>
-                                <div class="control">
-                                    <input class="input" type="password" id="login-password" required>
-                                </div>
-                            </div>
+                            <div class="field"><label class="label">Email</label><div class="control"><input class="input" type="email" id="login-email" required></div></div>
+                            <div class="field"><label class="label">Contraseña</label><div class="control"><input class="input" type="password" id="login-password" required></div></div>
                             <button type="submit" class="button is-primary is-fullwidth">Entrar</button>
-                            <p class="has-text-centered mt-4">
-                                ¿No tienes cuenta? <a href="#" id="show-register">Regístrate aquí</a>
-                            </p>
+                            <p class="has-text-centered mt-4">¿No tienes cuenta? <a href="#" id="show-register">Regístrate aquí</a></p>
                         </form>
-
-                        <!-- Formulario de Registro (oculto por defecto) -->
                         <form id="register-form" class="box is-hidden">
                             <h2 class="title has-text-centered">Registro</h2>
                             <div id="register-error" class="notification is-danger is-light is-hidden"></div>
                             <div id="register-success" class="notification is-success is-light is-hidden"></div>
-                            <div class="field">
-                                <label class="label">Email</label>
-                                <div class="control">
-                                    <input class="input" type="email" id="register-email" required>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <label class="label">Contraseña</label>
-                                <div class="control">
-                                    <input class="input" type="password" id="register-password" required>
-                                </div>
-                            </div>
+                            <div class="field"><label class="label">Email</label><div class="control"><input class="input" type="email" id="register-email" required></div></div>
+                            <div class="field"><label class="label">Contraseña</label><div class="control"><input class="input" type="password" id="register-password" required></div></div>
                             <button type="submit" class="button is-success is-fullwidth">Crear Cuenta</button>
-                             <p class="has-text-centered mt-4">
-                                ¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a>
-                            </p>
+                            <p class="has-text-centered mt-4">¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
                         </form>
                     </div>
                 </div>
             </div>
-
-            <!-- ======================================= -->
-            <!-- VISTA 2: CONTENEDOR DE LA APLICACIÓN    -->
-            <!-- ======================================= -->
+            <!-- VISTA 2: APLICACIÓN -->
             <div id="app-container" class="is-hidden">
-                <div class="level">
-                    <div class="level-left">
-                        <p id="user-info" class="is-size-5"></p>
-                    </div>
-                    <div class="level-right">
-                        <button id="logout-button" class="button is-danger">Cerrar Sesión</button>
-                    </div>
-                </div>
-                
-                <div class="columns is-centered">
-                    <div class="column is-8">
-                        <div class="box">
-                            <form id="task-form">
-                                <h2 class="title is-4">Añadir Nueva Tarea</h2>
-                                <div class="field">
-                                    <label class="label">Título</label>
-                                    <input class="input" type="text" id="titulo" required>
-                                </div>
-                                <div class="field">
-                                    <label class="label">Descripción</label>
-                                    <textarea class="textarea" id="descripcion" required></textarea>
-                                </div>
-                                <button type="submit" class="button is-primary is-fullwidth">Añadir Tarea</button>
-                            </form>
-                        </div>
-
-                        <h2 class="title is-4 mt-5">Mis Tareas</h2>
-                        <div id="task-list"></div>
-                    </div>
-                </div>
+                <div class="level"><div class="level-left"><p id="user-info" class="is-size-5"></p></div><div class="level-right"><button id="logout-button" class="button is-danger">Cerrar Sesión</button></div></div>
+                <div class="columns is-centered"><div class="column is-8">
+                    <div class="box"><form id="task-form">
+                        <h2 class="title is-4">Añadir Nueva Tarea</h2>
+                        <div class="field"><label class="label">Título</label><input class="input" type="text" id="titulo" required></div>
+                        <div class="field"><label class="label">Descripción</label><textarea class="textarea" id="descripcion" required></textarea></div>
+                        <button type="submit" class="button is-primary is-fullwidth">Añadir Tarea</button>
+                    </form></div>
+                    <h2 class="title is-4 mt-5">Mis Tareas</h2>
+                    <div id="task-list"></div>
+                </div></div>
             </div>
         </div>
     </section>
-
+    <!-- MODAL PARA GESTIONAR ASIGNACIONES -->
+    <div id="assign-modal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head"><p class="modal-card-title">Gestionar Usuarios Asignados</p><button class="delete" aria-label="close"></button></header>
+            <section class="modal-card-body">
+                <div id="assignees-list"></div><hr>
+                <form id="assign-form">
+                    <div class="field"><label class="label">Añadir Usuario por Email</label><div class="control"><input class="input" type="email" id="assign-email" placeholder="email@ejemplo.com" required></div></div>
+                    <button type="submit" class="button is-link">Asignar</button>
+                </form>
+            </section>
+        </div>
+    </div>
     <script src="/static/script.js"></script>
 </body>
 </html>
